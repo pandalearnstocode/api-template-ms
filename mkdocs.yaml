@@ -1,0 +1,48 @@
+site_name: Project wiki page
+docs_dir: 'wiki'
+site_description: 'Project specific wiki page'
+site_author: 'Aritra Biswas'
+repo_name: ab-inbev-martech-analytics/gh-action-ci-cd-collection
+repo_url: 'https://github.com/ab-inbev-martech-analytics/gh-action-ci-cd-collection'
+
+nav:
+    - Home: index.md
+    - Structure: project-structure.md
+    - Documentation: documentation.md
+    - CI/CD: cicd.md
+    - QA/QC: qaqc.md
+    - GitOps: scm.md
+    - Tests: tests.md
+    - Setup: setup.md
+    - Initialize: init.md 
+    - API: api.md
+    - DevOps: devops.md
+    - Cloud: cloud.md
+    - Deployment: deployment.md
+    - Diagrams: diagrams.md
+
+theme:
+  name: 'material'
+  language: 'en'
+  palette:
+    primary: 'Teal'
+    accent: 'Indigo'
+
+extra_css:
+  - 'css/prism.css'
+extra_javascript:
+  - js/prism.js
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ab-inbev-martech-analytics
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      css_class: code
+      use_pygments: false
+      guess_lang: false
+  - toc:
+      permalink: true

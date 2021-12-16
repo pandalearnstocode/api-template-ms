@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  fnano:
+    container_name: fnano
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      labels:
+        - fnano
+    volumes:
+        - .:/code
+    ports:
+      - 80:80
