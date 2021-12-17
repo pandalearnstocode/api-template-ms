@@ -64,7 +64,7 @@ jobs:
           pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > ../reports/pylint.log
       - name: pytest (unit tests)
         run: |
-          coverage run -m pytest -q tests
+          coverage run -m pytest
           coverage xml
       - name: Store coverage for sonar job
         uses: actions/upload-artifact@v1
