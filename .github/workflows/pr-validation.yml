@@ -1,0 +1,101 @@
+name: Develop PR Validation
+env:
+  CLUSTER_NAME: abi-mt-mroi-gb-dev-aks
+  CLUSTER_RESOURCE_GROUP: ABI-MT-MROI-DEV-RG-Global-Non-Prod
+  APP_NAME: aks-demo-app
+  NAMESPACE: default
+on:
+  push:
+    branches-ignore:
+      - "master"
+      - "staging"
+  pull_request:
+    branches-ignore:
+      - "master"
+      - "staging"
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libpq-dev gcc
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+      - name: Get docker image version
+        id: getversion
+        run:  |
+          MAJOR=$(cat VERSION | cut -d . -f 1)
+          MINOR=$(cat VERSION | cut -d . -f 2)
+          PATCH=$(cat VERSION | cut -d . -f 3)
+          VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "::set-output name=version::${VERSION}"
+      - name: Create cache
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ env.pythonLocation }}-pip-
+      - name: Install depdendencies & download data
+        if: steps.cache.outputs.cache-hit != 'false'
+        run: |
+          pip install --upgrade pip
+          pip install setuptools wheel twine
+          pip install -r requirements.txt
+          git fetch --depth 1 origin develop
+      - name: Create reports dir
+        run: |
+          mkdir ../reports
+      - name: Lint (pylint)
+        run: |
+          pip install pylint
+          pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > ../reports/pylint.log
+      - name: pytest (unit tests)
+        run: |
+          coverage run -m pytest -q tests
+          coverage xml
+      - name: Store coverage for sonar job
+        uses: actions/upload-artifact@v1
+        with:
+          name: coverage
+          path: coverage.xml
+  Sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get coverage report
+        uses: actions/download-artifact@v1
+        with:
+          name: coverage
+        continue-on-error: true
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=ab-inbev-martech-analytics
+            -Dsonar.projectKey=ab-inbev-martech-analytics_gh-action-ci-cd-collection
+            -Dsonar.sources=src
+            -Dsonar.dynamicAnalysis=reuseReports
+            -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
+            -Dsonar.python.pylint.reportPaths=linting-reports/pylint.log
+            -Dsonar.python.version=3.8
