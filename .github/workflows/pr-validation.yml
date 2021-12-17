@@ -5,14 +5,7 @@ env:
   APP_NAME: aks-demo-app
   NAMESPACE: default
 on:
-  push:
-    branches-ignore:
-      - "master"
-      - "staging"
   pull_request:
-    branches-ignore:
-      - "master"
-      - "staging"
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 
