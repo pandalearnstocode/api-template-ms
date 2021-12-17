@@ -1,8 +1,8 @@
-# Commercial Analytics RESTful API template
+# RESTful API template
 
 <!-- Add status badge here after we get it from sonarcloud or ci/cd pipeline. -->
 
-- [Commercial Analytics RESTful API template](#commercial-analytics-restful-api-template)
+- [RESTful API template](#restful-api-template)
   - [Tech stack:](#tech-stack)
   - [Important resource:](#important-resource)
   - [TODO checklist:](#todo-checklist)
