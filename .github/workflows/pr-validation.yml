@@ -92,9 +92,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.organization=ab-inbev-martech-analytics
-            -Dsonar.projectKey=ab-inbev-martech-analytics_gh-action-ci-cd-collection
-            -Dsonar.sources=src
+            -Dsonar.organization=pandalearnstocode
+            -Dsonar.projectKey=api-template-ms
+            -Dsonar.sources=app
             -Dsonar.dynamicAnalysis=reuseReports
             -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
             -Dsonar.python.pylint.reportPaths=linting-reports/pylint.log
