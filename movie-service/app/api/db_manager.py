@@ -1,4 +1,4 @@
-from app.api.models import MovieIn, MovieOut, MovieUpdate
+from app.api.models import MovieIn
 from app.api.db import movies, database
 
 

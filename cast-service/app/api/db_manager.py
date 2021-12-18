@@ -1,4 +1,4 @@
-from app.api.models import CastIn, CastOut, CastUpdate
+from app.api.models import CastIn
 from app.api.db import casts, database
 
 

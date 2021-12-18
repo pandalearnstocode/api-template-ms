@@ -60,6 +60,11 @@ mypy: ## Apply mypy.
 	@echo
 	@mypy $(path)
 
+.PHONY: auto-format
+auto-format: ## Apply auto-format.
+	black .
+	autopep8 --exit-code --recursive --in-place --aggressive --aggressive .
+	autoflake --in-place -r --ignore-init-module-imports --remove-unused-variables --remove-all-unused-imports .
 
 .PHONY: help
 help: ## Show this help message.
