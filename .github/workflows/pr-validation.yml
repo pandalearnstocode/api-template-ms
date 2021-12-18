@@ -113,7 +113,7 @@ jobs:
     needs: [Sonarcloud]
     steps:
       - name: 'Checkout GitHub Action'
-        uses: actions/checkout@main
+        uses: actions/checkout@v2
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
         with:
