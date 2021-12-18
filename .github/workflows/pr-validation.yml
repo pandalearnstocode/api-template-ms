@@ -49,13 +49,10 @@ jobs:
           pip install -r requirements.txt
           pip install PyJWT
           git fetch --depth 1 origin develop
-      - name: Create reports dir
-        run: |
-          mkdir ../reports
       - name: Lint (pylint)
         run: |
           pip install pylint
-          pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > ../reports/pylint.log
+          pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > pylint.log
       - name: pytest (unit tests)
         run: |
           coverage run -m pytest
@@ -70,7 +67,7 @@ jobs:
         if: always()
         with:
           name: linting-reports
-          path: ../reports/
+          path: pylint.log
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v2
         with:
