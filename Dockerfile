@@ -11,7 +11,7 @@ ARG API_ACCESS_TOKEN_EXPIRE_MINUTES=5256000000
 ARG DATABASE_URL=sqlite:///database.db
 WORKDIR /code
 COPY ./requirements.txt /code/requirements.txt
-RUN pip install --upgrade pip
+RUN pip install pip==21.3.1
 RUN pip install --no-cache-dir -r /code/requirements.txt
 COPY . /code/
 CMD ["gunicorn" , "app.main:app", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:80"]
