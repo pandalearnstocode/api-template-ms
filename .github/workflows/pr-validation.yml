@@ -96,6 +96,8 @@ jobs:
             !.vscode
             !node_modules/
             !venv/
+            !.mypy_cache
+            !.pytest_cache
   Sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
