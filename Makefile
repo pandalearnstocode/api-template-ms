@@ -66,6 +66,13 @@ auto-format: ## Apply auto-format.
 	autopep8 --exit-code --recursive --in-place --aggressive --aggressive .
 	autoflake --in-place -r --ignore-init-module-imports --remove-unused-variables --remove-all-unused-imports .
 
+.PHONY: generate-lint-reports
+ generate-lint-reports: ##  generate-lint-reports
+	bandit --exit-zero --format json --output bandit-report.json --recursive .
+	pylint . --exit-zero > pylint-report.out
+	flake8 --exit-zero --output-file=flake8.txt .
+	pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > pylint.log
+
 .PHONY: help
 help: ## Show this help message.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
