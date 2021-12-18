@@ -1,7 +1,5 @@
 name: autoblack_pull_request
-on:
-  pull_request:
-    types: [ closed ]
+on: pull_request
 
 jobs:
   build:
@@ -24,6 +22,7 @@ jobs:
           git branch
           git status
           black .
+          autopep8 --exit-code --recursive --in-place --aggressive --aggressive .
           git status
           echo ready to commit
           git commit -am "fixup! Format Python code with psf/black pull_request"
