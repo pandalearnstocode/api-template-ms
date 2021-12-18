@@ -57,6 +57,5 @@ bandit
 mypy
 isort
 sqlmodel
-asyncpg==0.22.0
 ormar
 coverage
