@@ -106,6 +106,8 @@ jobs:
             -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
             -Dsonar.python.pylint.reportPaths=linting-reports/pylint.log
             -Dsonar.python.version=3.8
+            -Dsonar.exclusions=**/venv/**
+            -Dsonar.sourceEncoding=UTF-8
       - name: Run Snyk to check for vulnerabilities - Monitor
         uses: snyk/actions/python-3.8@master
         continue-on-error: true
