@@ -61,16 +61,26 @@ jobs:
           coverage run -m pytest
           coverage xml
       - name: Store coverage for sonar job
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: coverage
           path: coverage.xml
       - name: Store reports for sonar job
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         if: always()
         with:
           name: linting-reports
           path: ../reports/
+      - name: Upload artifact for deployment jobs
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-app
+          path: |
+            . 
+            !.github
+            !.vscode
+            !node_modules/
+            !venv/
   Sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
