@@ -519,3 +519,5 @@ __Note:__ Right now, only `requirements.txt` is used for all the envs but this s
 * https://hackernoon.com/how-to-set-up-fastapi-ormar-and-alembic
 * https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker
 * https://testdriven.io/blog/fastapi-sqlmodel/
+* https://shipit.dev/posts/trigger-github-actions-on-pr-close.html
+* https://azure.github.io/AppService/2020/12/11/cicd-for-python-apps.html
