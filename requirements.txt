@@ -59,6 +59,5 @@ isort
 sqlmodel
 asyncpg==0.22.0
 ormar
-psycopg2-binary
 psycopg2
 coverage
