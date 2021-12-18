@@ -522,3 +522,4 @@ __Note:__ Right now, only `requirements.txt` is used for all the envs but this s
 * https://shipit.dev/posts/trigger-github-actions-on-pr-close.html
 * https://azure.github.io/AppService/2020/12/11/cicd-for-python-apps.html
 * https://peterevans.dev/posts/github-actions-how-to-automate-code-formatting-in-pull-requests/
+* https://itnext.io/a-beginners-guide-to-deploying-a-docker-application-to-production-using-docker-compose-de1feccd2893
