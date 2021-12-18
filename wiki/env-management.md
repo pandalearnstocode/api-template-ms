@@ -61,3 +61,7 @@ run: |
 - name: 'dotnet publish'
 run: dotnet nuget push --api-key AzureArtifacts bin/Release/*.nupkg
 ```
+
+## Reference:
+
+* [PyBites Python Poetry Training](https://www.youtube.com/watch?v=G-OAVLBFxbw)
