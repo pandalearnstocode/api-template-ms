@@ -5,6 +5,7 @@ env:
   APP_NAME: aks-demo-app
   NAMESPACE: default
   IMAGE_NAME: api-template-ms
+  SNYK_ORGID: d3ce6baa-7dc1-4063-a989-d05af223580e
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -99,12 +100,39 @@ jobs:
             -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
             -Dsonar.python.pylint.reportPaths=linting-reports/pylint.log
             -Dsonar.python.version=3.8
-      - name: Run Snyk to check for vulnerabilities
+      - name: Run Snyk to check for vulnerabilities - Monitor
         uses: snyk/actions/python-3.8@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high
+           command: monitor
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --skip-unresolved=true
+         
+      - name: Run Snyk to check for vulnerabilities - Test
+        uses: snyk/actions/python-3.8@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+           command: test
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --json-file-output=snyk.json --skip-unresolved=true
+           
+      - name: Generating the snyk report
+        run: |
+            mkdir ~/.npm-global
+            npm config set prefix '~/.npm-global'
+            export PATH=~/.npm-global/bin:$PATH
+            export PATH=~/.npm-global/bin:$PATH
+            source ~/.profile
+            npm install snyk-to-html -g
+            snyk-to-html -i snyk.json -o Snyk.html
+      - name: 'Upload Snyk report'
+        uses: actions/upload-artifact@v2
+        with:
+          name: snyk-report
+          path: Snyk.html
+          retention-days: 5
       - name: gitleaks
         uses: zricethezav/gitleaks-action@master
   deploy:
