@@ -1,0 +1,27 @@
+name: autoblack_pull_request
+on: [pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+            ref: ${{ github.head_ref }}
+      - uses: actions/setup-python@v2
+      - run: pip install black
+      - run: black --check .
+      - name: If needed, commit black changes to the pull request
+        if: failure()
+        run: |
+          printenv | grep GITHUB
+          git config --global user.name 'pandalearnstocode'
+          git config --global user.email 'pandalearnstocode@users.noreply.github.com'          
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+          git remote -v
+          git branch
+          git status
+          black .
+          git status
+          echo ready to commit
+          git commit -am "fixup! Format Python code with psf/black pull_request"
+          echo ready to push
+          git push
