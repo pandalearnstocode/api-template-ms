@@ -180,7 +180,7 @@ jobs:
           retention-days: 5
       - name: gitleaks
         uses: zricethezav/gitleaks-action@master
-  deploy:
+  push:
     runs-on: ubuntu-latest
     if: always()
     needs: [Sonarcloud]
@@ -226,3 +226,24 @@ jobs:
       - run: |
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+  dev-deploy:
+    name: Deploy backend app in AZ VM
+    if: github.event_name == 'pull_request'
+    needs: [push]
+    runs-on: ubuntu-latest
+    environment: 
+      name: dev
+      url: 'http://dev.myrandomapp.online'
+    steps:
+      - name: Deploy
+        run: echo I am deploying Backend! 
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          ref: develop
+      - name: First ensure that the build is down
+        run: docker-compose -f docker-compose.dev.yaml down
+      - name: Run the build
+        run: docker-compose -f docker-compose.dev.yaml build
+      - name: Start docker compose
+        run: docker-compose -f docker-compose.dev.yaml up --remove-orphan -d
