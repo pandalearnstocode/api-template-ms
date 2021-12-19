@@ -62,6 +62,13 @@
   - [Developers working on the project:](#developers-working-on-the-project)
   - [Reference:](#reference)
 
+
+
+## Deployment URL
+
+* [Dev Deployment CD Pipeline](https://github.com/pandalearnstocode/api-template-ms/blob/develop/.github/workflows/dev-deployment.yml)
+
+
 ## Tech stack:
 
 * __Language:__ Python
@@ -433,6 +440,12 @@ minikube delete --all
 
 ## CI/CD pipeline:
 
+### Running GitHub actions as service
+
+```bash
+sudo ./svc.sh install
+sudo ./svc.sh start
+```
 ### CI pipeline:
 
 <!-- TODO: Once CI pipeline is developed the description, how to use and automated behavior of the pipeline should go here. -->
@@ -519,3 +532,7 @@ __Note:__ Right now, only `requirements.txt` is used for all the envs but this s
 * https://hackernoon.com/how-to-set-up-fastapi-ormar-and-alembic
 * https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker
 * https://testdriven.io/blog/fastapi-sqlmodel/
+* https://shipit.dev/posts/trigger-github-actions-on-pr-close.html
+* https://azure.github.io/AppService/2020/12/11/cicd-for-python-apps.html
+* https://peterevans.dev/posts/github-actions-how-to-automate-code-formatting-in-pull-requests/
+* https://itnext.io/a-beginners-guide-to-deploying-a-docker-application-to-production-using-docker-compose-de1feccd2893

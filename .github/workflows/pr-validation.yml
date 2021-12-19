@@ -1,21 +1,14 @@
 name: Develop PR Validation
 env:
-  CLUSTER_NAME: abi-mt-mroi-gb-dev-aks
-  CLUSTER_RESOURCE_GROUP: ABI-MT-MROI-DEV-RG-Global-Non-Prod
-  APP_NAME: aks-demo-app
-  NAMESPACE: default
+  CLUSTER_NAME: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  CLUSTER_RESOURCE_GROUP: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  APP_NAME: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  NAMESPACE: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  IMAGE_NAME: api-template-ms
 on:
-  push:
-    branches-ignore:
-      - "master"
-      - "staging"
   pull_request:
-    branches-ignore:
-      - "master"
-      - "staging"
     types: [opened, synchronize, reopened]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -54,26 +47,57 @@ jobs:
           pip install --upgrade pip
           pip install setuptools wheel twine
           pip install -r requirements.txt
-          pip uninstall JWT
-          pip uninstall PyJWT
           pip install PyJWT
           git fetch --depth 1 origin develop
-      - name: Create reports dir
-        run: |
-          mkdir ../reports
       - name: Lint (pylint)
         run: |
           pip install pylint
-          pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > ../reports/pylint.log
+          pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > pylint.log
       - name: pytest (unit tests)
         run: |
           coverage run -m pytest
           coverage xml
-      - name: Store coverage for sonar job
-        uses: actions/upload-artifact@v1
+      - name: Lint (flake8)
+        run: |
+          flake8 --exit-zero --output-file=flake8.txt .
+      - name: Lint (bandit)
+        run: |
+          bandit --exit-zero --format json --output bandit-report.json --recursive .
+      - name: Store coverage for sonar job (pytest)
+        uses: actions/upload-artifact@v2
         with:
           name: coverage
           path: coverage.xml
+      - name: Store reports for sonar job (pylint)
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: linting-reports
+          path: pylint.log
+      - name: Store reports for sonar job (flake8)
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: flake8-reports
+          path: flake8.txt
+      - name: Store reports for sonar job (bandit)
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: bandit-reports
+          path: bandit-report.json
+      - name: Upload artifact for deployment jobs (app)
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-app
+          path: |
+            . 
+            !.github
+            !.vscode
+            !node_modules/
+            !venv/
+            !.mypy_cache
+            !.pytest_cache
   Sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
@@ -83,11 +107,26 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Get coverage report
+      - name: Get coverage report (pytest)
         uses: actions/download-artifact@v1
         with:
           name: coverage
         continue-on-error: true
+      - name: Get coverage report (pylint)
+        uses: actions/download-artifact@v1
+        with:
+          name: linting-reports
+        continue-on-error: true
+      - name: Get coverage report (flake8)
+        uses: actions/download-artifact@v1
+        with:
+          name: flake8-reports
+        continue-on-error: true
+      - name: Get coverage report (bandit)
+        uses: actions/download-artifact@v1
+        with:
+          name: bandit-reports
+        continue-on-error: true   
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -101,4 +140,89 @@ jobs:
             -Dsonar.dynamicAnalysis=reuseReports
             -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
             -Dsonar.python.pylint.reportPaths=linting-reports/pylint.log
+            -Dsonar.python.bandit.reportPaths=bandit-reports/bandit-report.json
+            -Dsonar.python.flake8.reportPaths=flake8-reports/flake8.txt
             -Dsonar.python.version=3.8
+            -Dsonar.exclusions=**/venv/**
+            -Dsonar.sourceEncoding=UTF-8
+      - name: Run Snyk to check for vulnerabilities - Monitor
+        uses: snyk/actions/python-3.8@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+           command: monitor
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --skip-unresolved=true
+         
+      - name: Run Snyk to check for vulnerabilities - Test
+        uses: snyk/actions/python-3.8@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+           command: test
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --json-file-output=snyk.json --skip-unresolved=true
+           
+      - name: Generating the snyk report
+        run: |
+            mkdir ~/.npm-global
+            npm config set prefix '~/.npm-global'
+            export PATH=~/.npm-global/bin:$PATH
+            export PATH=~/.npm-global/bin:$PATH
+            source ~/.profile
+            npm install snyk-to-html -g
+            snyk-to-html -i snyk.json -o Snyk.html
+      - name: 'Upload Snyk report'
+        uses: actions/upload-artifact@v2
+        with:
+          name: snyk-report
+          path: Snyk.html
+          retention-days: 5
+      - name: gitleaks
+        uses: zricethezav/gitleaks-action@master
+  push:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [Sonarcloud]
+    steps:
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v2
+      - name: 'Login via Azure CLI'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Get docker image version
+        id: getversion
+        run:  |
+          MAJOR=$(cat VERSION | cut -d . -f 1)
+          MINOR=$(cat VERSION | cut -d . -f 2)
+          PATCH=$(cat VERSION | cut -d . -f 3)
+          VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "::set-output name=version::${VERSION}"
+      - name: 'Build image'
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - run: |
+          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
+          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+      - name: Run Snyk to check Docker images for vulnerabilities
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+          args: --file=Dockerfile
+          command: monitor
+      - name: 'Push image'
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - run: |
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest

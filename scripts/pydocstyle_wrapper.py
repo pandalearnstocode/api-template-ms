@@ -19,7 +19,13 @@ except IllegalConfiguration:
 errors = []
 try:
     for (filename, checked_codes, ignore_decorators) in conf.get_files_to_check():
-        errors.extend(check((filename,), select=checked_codes, ignore_decorators=ignore_decorators,))
+        errors.extend(
+            check(
+                (filename,),
+                select=checked_codes,
+                ignore_decorators=ignore_decorators,
+            )
+        )
 except IllegalConfiguration as error:
     sys.stderr.write(error.args[0])
     sys.exit(2)
@@ -38,7 +44,10 @@ for error in errors:
                 "primaryLocation": {
                     "message": error.message,
                     "filePath": error.filename,
-                    "textRange": {"startLine": error.line, "startColumn": 1,},
+                    "textRange": {
+                        "startLine": error.line,
+                        "startColumn": 1,
+                    },
                 },
                 "effortMinutes": 5,
             }

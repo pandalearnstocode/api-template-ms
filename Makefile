@@ -60,6 +60,18 @@ mypy: ## Apply mypy.
 	@echo
 	@mypy $(path)
 
+.PHONY: auto-format
+auto-format: ## Apply auto-format.
+	black .
+	autopep8 --exit-code --recursive --in-place --aggressive --aggressive .
+	autoflake --in-place -r --ignore-init-module-imports --remove-unused-variables --remove-all-unused-imports .
+
+.PHONY: generate-lint-reports
+ generate-lint-reports: ##  generate-lint-reports
+	bandit --exit-zero --format json --output bandit-report.json --recursive .
+	pylint . --exit-zero > pylint-report.out
+	flake8 --exit-zero --output-file=flake8.txt .
+	pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > pylint.log
 
 .PHONY: help
 help: ## Show this help message.
