@@ -8,7 +8,6 @@ on:
   deployment:
     name: Deploy backend app in AZ VM
     if: github.event.pull_request.merged == true
-    needs: [push]
     runs-on: self-hosted
     environment: 
       name: dev
