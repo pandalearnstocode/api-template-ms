@@ -2,6 +2,7 @@ name: "Development deploy"
 on:
   pull_request:
     types: [ closed ]
+  workflow_dispatch:
 jobs:
   deployment:
     name: Deploy backend app in AZ VM
