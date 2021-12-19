@@ -9,7 +9,8 @@ def mock_randint(*args, **kwargs):
 
 def test_func_main_a(monkeypatch) -> None:
     monkeypatch.setattr(
-        "app.apis.api_a.submod.random.randint", mock_randint,
+        "app.apis.api_a.submod.random.randint",
+        mock_randint,
     )
     seed = 420
     result = main_func_a(seed)
@@ -21,7 +22,8 @@ def test_func_main_a(monkeypatch) -> None:
 
 def test_func_main_b(monkeypatch) -> None:
     monkeypatch.setattr(
-        "app.apis.api_a.submod.random.randint", mock_randint,
+        "app.apis.api_a.submod.random.randint",
+        mock_randint,
     )
     seed = 500
     result = main_func_b(seed)

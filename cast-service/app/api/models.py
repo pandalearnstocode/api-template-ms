@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
+
 
 class CastIn(BaseModel):
     name: str
