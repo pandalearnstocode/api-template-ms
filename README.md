@@ -64,7 +64,7 @@
 
 
 
-## Deployment URL
+## Deployment URL:
 
 * [Dev Deployment CD Pipeline](https://github.com/pandalearnstocode/api-template-ms/blob/develop/.github/workflows/dev-deployment.yml)
 
