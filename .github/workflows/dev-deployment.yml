@@ -2,24 +2,24 @@ name: "Development deploy"
 on:
   pull_request:
     types: [ closed ]
+  workflow_dispatch:
 jobs:
   deployment:
-    name: Deploy backend app in AZ VM
+    name: Deploy backend app in AZ VM (develop)
     if: github.event.pull_request.merged == true
     runs-on: self-hosted
     environment: 
       name: dev
       url: 'http://dev.myrandomapp.online'
     steps:
-      - name: Deploy
-        run: echo I am deploying Backend! 
       - name: Checkout repository and submodules
         uses: actions/checkout@v2
         with:
           ref: develop
+          clean: false
       - name: First ensure that the build is down
-        run: docker-compose -f docker-compose.dev.yml down
+        run: sudo docker-compose -f docker-compose.dev.yml down
       - name: Run the build
-        run: docker-compose -f docker-compose.dev.yml build
+        run: sudo docker-compose -f docker-compose.dev.yml build
       - name: Start docker compose
-        run: docker-compose -f docker-compose.dev.yml up --remove-orphan -d
+        run: sudo docker-compose -f docker-compose.dev.yml up --remove-orphan -d

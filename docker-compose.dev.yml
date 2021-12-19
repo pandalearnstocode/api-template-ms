@@ -19,4 +19,4 @@ services:
         gunicorn app.main:app --workers 1 \
         --worker-class uvicorn.workers.UvicornWorker -b 0.0.0.0:6969
     ports:
-      - 6969:6969
+      - 80:6969

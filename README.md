@@ -64,7 +64,7 @@
 
 
 
-## Deployment URL
+## Deployment URL:
 
 * [Dev Deployment CD Pipeline](https://github.com/pandalearnstocode/api-template-ms/blob/develop/.github/workflows/dev-deployment.yml)
 
@@ -511,9 +511,9 @@ __Note:__ Right now, only `requirements.txt` is used for all the envs but this s
 
 ## Developers working on the project:
 
-* Primary owner:
-* Secondary owner:
-* Team members:
+* __Primary owner:__
+* __Secondary owner:__
+* __Team members:__
 
 ## Reference:
 
