@@ -511,9 +511,9 @@ __Note:__ Right now, only `requirements.txt` is used for all the envs but this s
 
 ## Developers working on the project:
 
-* Primary owner:
-* Secondary owner:
-* Team members:
+* __Primary owner:__
+* __Secondary owner:__
+* __Team members:__
 
 ## Reference:
 
