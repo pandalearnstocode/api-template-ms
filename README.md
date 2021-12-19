@@ -433,6 +433,12 @@ minikube delete --all
 
 ## CI/CD pipeline:
 
+### Running GitHub actions as service
+
+```bash
+sudo ./svc.sh install
+sudo ./svc.sh start
+```
 ### CI pipeline:
 
 <!-- TODO: Once CI pipeline is developed the description, how to use and automated behavior of the pipeline should go here. -->
