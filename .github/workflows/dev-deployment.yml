@@ -18,8 +18,8 @@ jobs:
         with:
           ref: develop
       - name: First ensure that the build is down
-        run: docker-compose -f docker-compose.dev.yaml down
+        run: docker-compose -f docker-compose.dev.yml down
       - name: Run the build
-        run: docker-compose -f docker-compose.dev.yaml build
+        run: docker-compose -f docker-compose.dev.yml build
       - name: Start docker compose
-        run: docker-compose -f docker-compose.dev.yaml up --remove-orphan -d
+        run: docker-compose -f docker-compose.dev.yml up --remove-orphan -d
