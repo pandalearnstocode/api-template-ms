@@ -12,6 +12,8 @@ jobs:
       name: dev
       url: 'http://dev.myrandomapp.online'
     steps:
+      - name: Clean old data
+        run: sudo rm -rf /home/mba-gra-development-server/actions-runner/_work/api-template-ms/api-template-ms
       - name: Deploy
         run: echo I am deploying Backend! 
       - name: Checkout repository and submodules
