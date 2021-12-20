@@ -61,11 +61,11 @@
     - [Container names in different envs:](#container-names-in-different-envs)
   - [DL linked with the project:](#dl-linked-with-the-project)
   - [Dependency files:](#dependency-files)
-  - [__Exploring `poetry` for dependency management in python__](#exploring-poetry-for-dependency-management-in-python)
-    - [__Some useful `poetry` commands__](#some-useful-poetry-commands)
-    - [__Some important information__](#some-important-information)
-    - [__Important files__](#important-files)
-    - [__Publishing library as artifact to artifact store__](#publishing-library-as-artifact-to-artifact-store)
+  - [Exploring `poetry` for dependency management in python](#exploring-poetry-for-dependency-management-in-python)
+    - [Some useful `poetry` commands](#some-useful-poetry-commands)
+    - [Some important information](#some-important-information)
+    - [Important files](#important-files)
+    - [Publishing library as artifact to artifact store](#publishing-library-as-artifact-to-artifact-store)
   - [Developers working on the project:](#developers-working-on-the-project)
   - [Reference:](#reference)
 
@@ -519,11 +519,11 @@ Check gitflow related details [here](https://nvie.com/posts/a-successful-git-bra
 __Note:__ Right now, only `requirements.txt` is used for all the envs but this should be changed depending on envs. 
 
 
-## __Exploring `poetry` for dependency management in python__
+## Exploring `poetry` for dependency management in python
 
 In general `pip` & `venv` is a good combination of tool when you don't have to manage multiple dependencies for your project. But imaging that in a project you need to management multiple dependency files to deploy code into multiple envs. It is possible to do this with `pip`, but in that case you need to manage multiple requirements files. To solve this project I have checked a few alternative like  `pyenv`, `pipx`, `pipenv`, `poetry` etc. According to my experience, poetry is the simplest and most efficient one. I was checking some of the useful tutorials about this and here I am just taking a note of some of the useful points regarding this tool.
 
-### __Some useful `poetry` commands__
+### Some useful `poetry` commands
 
 ```bash
 # Download poetry in Ubuntu
@@ -545,9 +545,10 @@ poetry publish # Publish library to PyPI
 poetry export - requirements.txt --output requirements.txt # Generate requirements.txt
 poetry use python3.8 # Use specific version of python in the project
 ```
-### __Some important information__
 
-### __Important files__
+### Some important information
+
+### Important files
 
 * `pyproject.toml` is the single file for all project related metadata.
 * `poetry.lock` file is the granular metadata.
@@ -555,7 +556,7 @@ poetry use python3.8 # Use specific version of python in the project
 * `config.toml` & `auth.toml` is used for setting up the artifact repository.
 * export `POETRY_PYPI_TOKEN_PYPI`, export `POETRY_HTTP_BAISC_PYPI_USERNAME` and export `POETRY_HTTP_BAISC_PYPI_PASSWORD` can be used for this.
 
-### __Publishing library as artifact to artifact store__
+### Publishing library as artifact to artifact store
 
 ```toml
 # config.toml : ~/.config/pypoetry/config.toml
