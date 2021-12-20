@@ -482,7 +482,7 @@ Once a new code is merge to develop &#8594; Create, scan, build & push docker im
 #### 1st tag has to be created manually 
 
 ```bash
-git tag -a 0.0.1 -m "Init version"
+git tag -a 0.0.0 -m "Init version"
 git push --tags 
 git add .
 git commit -m "fix: svc installed."
@@ -494,6 +494,8 @@ cz changelog
 git push origin :refs/tags/0.0.0 # delete tags from remote
 git tag -d 0.0.0 # delete tags from local
 ```
+
+After creating tag 0.0.0 CI pipeline will trigger based on commit msg while merging code from `develop` to `staging`.
 
 ### Automated testing workflow:
 
