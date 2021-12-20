@@ -9,7 +9,7 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 jobs:
-  build:
+  qaqc-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -54,6 +54,24 @@ jobs:
       - name: (step 8) Run bandit and generate report for security related issue
         run: |
           bandit --exit-zero --format json --output bandit-report.json --recursive .
+      - name: (step 9) Checking any secret is present in code base using gitleaks
+        uses: zricethezav/gitleaks-action@master
+      - name: Run Snyk to check for vulnerabilities - Monitor
+        uses: snyk/actions/python-3.8@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+           command: monitor
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --skip-unresolved=true
+      - name: Run Snyk to check for vulnerabilities - Test
+        uses: snyk/actions/python-3.8@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+           command: test
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --json-file-output=snyk.json --skip-unresolved=true
       - name: (step 9) Upload test coverage report generated for unit tests using pytest to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
@@ -74,6 +92,11 @@ jobs:
         with:
           name: bandit-reports
           path: bandit-report.json
+      - name: (step 12) Upload snyk errors to to GitHub packages.
+        uses: actions/upload-artifact@v2
+        with:
+          name: snyk-reports
+          path: snyk.json
       - name: (step 13) Upload app code as artifact in GitHub packages.
         uses: actions/upload-artifact@v2
         with:
@@ -86,11 +109,26 @@ jobs:
             !venv/
             !.mypy_cache
             !.pytest_cache
-  Sonarcloud:
+      - name: Generating the snyk report
+        run: |
+            mkdir ~/.npm-global
+            npm config set prefix '~/.npm-global'
+            export PATH=~/.npm-global/bin:$PATH
+            export PATH=~/.npm-global/bin:$PATH
+            source ~/.profile
+            npm install snyk-to-html -g
+            snyk-to-html -i snyk.json -o Snyk.html
+      - name: 'Upload Snyk report'
+        uses: actions/upload-artifact@v2
+        with:
+          name: snyk-report-html
+          path: snyk.html
+          retention-days: 5
+  qaqc-publish:
     name: SonarCloud
     runs-on: ubuntu-latest
     if: always()
-    needs: [build]
+    needs: [qaqc-checks]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -115,6 +153,16 @@ jobs:
         with:
           name: bandit-reports
         continue-on-error: true   
+      - name: Get coverage report (snyk)
+        uses: actions/download-artifact@v1
+        with:
+          name: snyk-reports
+        continue-on-error: true
+      - name: Get coverage report (snyk html)
+        uses: actions/download-artifact@v1
+        with:
+          name: snyk-reports-html
+        continue-on-error: true
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -133,45 +181,10 @@ jobs:
             -Dsonar.python.version=3.8
             -Dsonar.exclusions=**/venv/**
             -Dsonar.sourceEncoding=UTF-8
-      - name: Run Snyk to check for vulnerabilities - Monitor
-        uses: snyk/actions/python-3.8@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-           command: monitor
-           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --skip-unresolved=true
-         
-      - name: Run Snyk to check for vulnerabilities - Test
-        uses: snyk/actions/python-3.8@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-           command: test
-           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --json-file-output=snyk.json --skip-unresolved=true
-           
-      - name: Generating the snyk report
-        run: |
-            mkdir ~/.npm-global
-            npm config set prefix '~/.npm-global'
-            export PATH=~/.npm-global/bin:$PATH
-            export PATH=~/.npm-global/bin:$PATH
-            source ~/.profile
-            npm install snyk-to-html -g
-            snyk-to-html -i snyk.json -o Snyk.html
-      - name: 'Upload Snyk report'
-        uses: actions/upload-artifact@v2
-        with:
-          name: snyk-report
-          path: Snyk.html
-          retention-days: 5
-      - name: gitleaks
-        uses: zricethezav/gitleaks-action@master
-  push:
+  docker-build:
     runs-on: ubuntu-latest
     if: always()
-    needs: [Sonarcloud]
+    needs: [qaqc-publish]
     steps:
       - name: 'Checkout GitHub Action'
         uses: actions/checkout@v2
@@ -205,6 +218,19 @@ jobs:
           image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
           args: --file=Dockerfile
           command: monitor
+  docker-push:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [docker-build]
+    steps:
+      - name: Get docker image version
+        id: getversion
+        run:  |
+          MAJOR=$(cat VERSION | cut -d . -f 1)
+          MINOR=$(cat VERSION | cut -d . -f 2)
+          PATCH=$(cat VERSION | cut -d . -f 3)
+          VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "::set-output name=version::${VERSION}"
       - name: 'Push image'
         uses: azure/docker-login@v1
         with:
