@@ -1,15 +1,16 @@
 name: autoblack_pull_request
-on: pull_request
+on: workflow_dispatch
 
 jobs:
-  build:
+  auto-formatter:
+    name: Auto-format code
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           ref: ${{ github.head_ref }}
       - uses: actions/setup-python@v2
-      - run: pip install black
+      - run: pip install black autopep8 autoflake
       - run: black --check .
       - name: If needed, commit black changes to the pull request
         if: failure() && github.event.pull_request.merged == true
@@ -26,6 +27,6 @@ jobs:
           autoflake --in-place -r --ignore-init-module-imports --remove-unused-variables --remove-all-unused-imports .
           git status
           echo ready to commit
-          git commit -am "fixup! Format Python code with psf/black pull_request"
+          git commit -am "style: Format Python code with psf/black pull_request"
           echo ready to push
-          git push
+          git push origin ${{ github.head_ref }}
