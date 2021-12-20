@@ -23,6 +23,7 @@ jobs:
           git status
           black .
           autopep8 --exit-code --recursive --in-place --aggressive --aggressive .
+          autoflake --in-place -r --ignore-init-module-imports --remove-unused-variables --remove-all-unused-imports .
           git status
           echo ready to commit
           git commit -am "fixup! Format Python code with psf/black pull_request"
