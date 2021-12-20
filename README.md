@@ -1,8 +1,5 @@
 # RESTful API template
 
-* Develop deployment workflow validation
-* bump validation 1
-
 <!-- Add status badge here after we get it from sonarcloud or ci/cd pipeline. -->
 
 - [RESTful API template](#restful-api-template)
