@@ -56,6 +56,7 @@
   - [SCM workflow:](#scm-workflow)
     - [Development flow:](#development-flow)
     - [Release management workflow:](#release-management-workflow)
+      - [1st tag has to be created manually](#1st-tag-has-to-be-created-manually)
     - [Automated testing workflow:](#automated-testing-workflow)
     - [Continuous delivery approval based workflow:](#continuous-delivery-approval-based-workflow)
   - [Env variables:](#env-variables)
@@ -477,6 +478,8 @@ Lets imaging that there is an issue in github repository which is assigned to yo
 ### Release management workflow:
 
 Once a new code is merge to develop &#8594; Create, scan, build & push docker image to container registry &#8594; Deploy the same image in the staging envs &#8594; Generate project wiki docs &#8594;Deploy project wiki docs &#8594; Run unit tests on the dev envs using GitHub actions &#8594; Communicate the tests results using a teams & mail notification.
+
+#### 1st tag has to be created manually 
 
 ```bash
 git tag -a 0.0.1 -m "Init version"
