@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
 jobs:
   qaqc-checks:
+    name: Run QA-QC checks
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -123,7 +124,7 @@ jobs:
             export PATH=~/.npm-global/bin:$PATH
             source ~/.profile
             npm install snyk-to-html -g
-            snyk-to-html -i snyk.json -o Snyk.html
+            snyk-to-html -i snyk.json -o snyk.html
       - name: (step 19) Upload Snyk report
         uses: actions/upload-artifact@v2
         with:
@@ -131,7 +132,7 @@ jobs:
           path: snyk.html
           retention-days: 5
   qaqc-publish:
-    name: SonarCloud
+    name: QA-QC Publish
     runs-on: ubuntu-latest
     if: always()
     needs: [qaqc-checks]
@@ -189,6 +190,7 @@ jobs:
             -Dsonar.exclusions=**/venv/**
             -Dsonar.sourceEncoding=UTF-8
   docker-build:
+    name: Docker Build & Publish
     runs-on: ubuntu-latest
     if: always()
     needs: [qaqc-publish]
