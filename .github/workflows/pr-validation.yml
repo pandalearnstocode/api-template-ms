@@ -1,6 +1,7 @@
 name: Develop PR Validation
 env:
   IMAGE_NAME: api-template-ms
+  PYTHON_VERSION: '3.8'
 on:
   pull_request:
     branches:
