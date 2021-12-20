@@ -77,26 +77,31 @@ jobs:
         with:
           name: coverage
           path: coverage.xml
+          retention-days: 5
       - name: (step 13) Upload linting errors to to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: linting-reports
           path: pylint.log
+          retention-days: 5
       - name: (step 14) Upload flake8 errors to to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: flake8-reports
           path: flake8.txt
+          retention-days: 5
       - name: (step 15) Upload bandit errors to to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: bandit-reports
           path: bandit-report.json
+          retention-days: 5
       - name: (step 16) Upload snyk errors to to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: snyk-reports
           path: snyk.json
+          retention-days: 5
       - name: (step 17) Upload app code as artifact in GitHub packages.
         uses: actions/upload-artifact@v2
         with:
@@ -109,6 +114,7 @@ jobs:
             !venv/
             !.mypy_cache
             !.pytest_cache
+          retention-days: 5
       - name: (step 18) Generating the snyk report
         run: |
             mkdir ~/.npm-global
