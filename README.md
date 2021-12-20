@@ -478,6 +478,15 @@ Lets imaging that there is an issue in github repository which is assigned to yo
 
 Once a new code is merge to develop &#8594; Create, scan, build & push docker image to container registry &#8594; Deploy the same image in the staging envs &#8594; Generate project wiki docs &#8594;Deploy project wiki docs &#8594; Run unit tests on the dev envs using GitHub actions &#8594; Communicate the tests results using a teams & mail notification.
 
+```bash
+git tag -a 0.0.1 -m "Init version"
+git push --tags 
+git add .
+git commit -m "fix: svc installed."
+cz bump
+cz changelog
+```
+
 ### Automated testing workflow:
 
 If the tests results are fine, run all the linting, formatting (black, autoflake8, isort) and other changes in the staging area. &#8594; Bump version, generate changelogs and release notes. &#8594; Update tags and releases in GitHub &#8594;Check if the dependency needs to be updated or not, if required to that &#8594; Commit code to staging branch &#8594; Trigger a build pipeline to deploy this in staging server &#8594; Run all the regression tests, integration tests, load tests here &#8594; Generate results and publish the same in project Wiki or some other place &#8594; Communicate build stats and tests result to via email & teams notification.
