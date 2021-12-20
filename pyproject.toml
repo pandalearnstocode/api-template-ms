@@ -24,7 +24,7 @@ ignore_errors = true
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.0.2"
+version = "0.0.3"
 version_files = [
     "app/__init__.py",
     "pyproject.toml:version"
@@ -66,7 +66,7 @@ extend-exclude = "migrations,scripts"
 
 [tool.poetry]
 name = "app"
-version = "0.0.2"
+version = "0.0.3"
 description = ""
 authors = ["Aritra Biswas <pandalearnstocode@gmail.com>"]
 
