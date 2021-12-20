@@ -128,7 +128,7 @@ jobs:
       - name: (step 19) Upload Snyk report
         uses: actions/upload-artifact@v2
         with:
-          name: snyk-report-html
+          name: snyk-reports-html
           path: snyk.html
           retention-days: 5
   qaqc-publish:
