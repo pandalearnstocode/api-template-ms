@@ -74,7 +74,10 @@ def _strfbytes(bytes_value: int, unit: str = None, decimal_points: int = 2) -> s
 
 # Checks if the file exists
 def _does_file_exist(
-    file_in_dir: pathlib.Path, blob_file: BlobClient, files_downloaded: set, chunk_size: int = 4096,
+    file_in_dir: pathlib.Path,
+    blob_file: BlobClient,
+    files_downloaded: set,
+    chunk_size: int = 4096,
 ) -> bool:
     properties = blob_file.get_blob_properties()
     # check if file exists in dir
@@ -103,13 +106,25 @@ def _load_hash_log(log_file: pathlib.Path = base_dir / "hash_log.csv"):
     else:
         log_file.parent.mkdir(parents=True, exist_ok=True)
         DF_LOGS = pd.DataFrame(
-            columns=["log_datetime", "hash_key", "blob_name", "size", "user_name", "forced", "dvc_skipped",]
+            columns=[
+                "log_datetime",
+                "hash_key",
+                "blob_name",
+                "size",
+                "user_name",
+                "forced",
+                "dvc_skipped",
+            ]
         )
         logger.info("Hash logs not found, creating new hash log!")
 
 
 def _create_log_frame(
-    hash_val: str, blob_name: str, file_size: int, force: bool, skip_dvc: bool,
+    hash_val: str,
+    blob_name: str,
+    file_size: int,
+    force: bool,
+    skip_dvc: bool,
 ):
     return {
         "log_datetime": pd.to_datetime("today"),
@@ -140,7 +155,15 @@ def _check_hash_log(hash_val: str) -> bool:
 
 
 def _save_blob_file(
-    blob, container_client, files_downloaded, raw_file_dir, extract_2_dir, force, keep, skip_dvc, need_dvc,
+    blob,
+    container_client,
+    files_downloaded,
+    raw_file_dir,
+    extract_2_dir,
+    force,
+    keep,
+    skip_dvc,
+    need_dvc,
 ):
     blob_client = container_client.get_blob_client(blob.name)
     properties = blob_client.get_blob_properties()
@@ -167,26 +190,51 @@ def _save_blob_file(
         logger.info(f"{blob.name} Download complete!\n")
         logger.info(f"Decompressing {blob.name}!\n")
         new_file = decompress_file(
-            path, extract_to=extract_to.parent, new_file_name=extract_to.stem, delete_compressed=not keep,
+            path,
+            extract_to=extract_to.parent,
+            new_file_name=extract_to.stem,
+            delete_compressed=not keep,
         )
         if new_file is not None:
             need_dvc.add(new_file.with_suffix(new_file.suffix))
-            return _create_log_frame(hex_val, blob.name, properties.size, force, skip_dvc,)
+            return _create_log_frame(
+                hex_val,
+                blob.name,
+                properties.size,
+                force,
+                skip_dvc,
+            )
     elif not _check_hash_log(hex_val) and file_exists:  # file wasn't extracted!
         logger.info(f"Decompressing {blob.name}!\n")
         new_file = decompress_file(
-            path, extract_to=extract_to.parent, new_file_name=extract_to.stem, delete_compressed=not keep,
+            path,
+            extract_to=extract_to.parent,
+            new_file_name=extract_to.stem,
+            delete_compressed=not keep,
         )
         if new_file is not None:
             need_dvc.add(new_file.with_suffix(new_file.suffix))
-            return _create_log_frame(hex_val, blob.name, properties.size, force, skip_dvc,)
+            return _create_log_frame(
+                hex_val,
+                blob.name,
+                properties.size,
+                force,
+                skip_dvc,
+            )
     else:
         need_dvc.add((extract_to.parent / (extract_to.stem)))
         logger.info(f"Skipping {blob.name}!\n")
 
 
 def blob_download(
-    base_dir, raw_file_dir, extract_2_dir, files_downloaded, force=False, keep=False, skip_dvc=False, n_jobs=10,
+    base_dir,
+    raw_file_dir,
+    extract_2_dir,
+    files_downloaded,
+    force=False,
+    keep=False,
+    skip_dvc=False,
+    n_jobs=10,
 ):
     """Downloads all blobs in the container to the raw_file_dir."""
     n_downloads = 0
@@ -197,7 +245,15 @@ def blob_download(
     blobs_list = container_client.list_blobs()
     logs = Parallel(n_jobs=n_jobs, prefer="threads")(
         delayed(_save_blob_file)(
-            blob, container_client, files_downloaded, raw_file_dir, extract_2_dir, force, keep, skip_dvc, need_dvc,
+            blob,
+            container_client,
+            files_downloaded,
+            raw_file_dir,
+            extract_2_dir,
+            force,
+            keep,
+            skip_dvc,
+            need_dvc,
         )
         for blob in blobs_list
     )
@@ -209,7 +265,10 @@ def blob_download(
 
 
 def dvc_update(
-    base_dir, update_dvc: bool = False, auto_commit: bool = False, need_dvc: List[pathlib.Path] = None,
+    base_dir,
+    update_dvc: bool = False,
+    auto_commit: bool = False,
+    need_dvc: List[pathlib.Path] = None,
 ):
     """Updates the dvc repo with the files in need_dvc."""
     env = os.environ.copy()
@@ -233,7 +292,9 @@ def dvc_update(
         if auto_commit:
             subprocess.run("git add *.dvc", shell=True, env=env)
             subprocess.run(
-                f"git commit -m \"DVC files updated {pd.to_datetime('today')}\"", shell=True, env=env,
+                f"git commit -m \"DVC files updated {pd.to_datetime('today')}\"",
+                shell=True,
+                env=env,
             )
             logger.info("DVC files commited!")
         logger.info("DVC files updated!")
@@ -280,7 +341,14 @@ def get_data(
             f"{('No' if len(files_downloaded) == 0 else f'Currently {len(files_downloaded)}' )} files downloaded!"
         )
         n_downloads, need_dvc = blob_download(
-            base_dir, raw_file_dir, extract_2_dir, files_downloaded, force, keep, skip_dvc, n_jobs,
+            base_dir,
+            raw_file_dir,
+            extract_2_dir,
+            files_downloaded,
+            force,
+            keep,
+            skip_dvc,
+            n_jobs,
         )
 
     if not update_dvc and skip_dvc:
@@ -304,7 +372,9 @@ if __name__ == "__main__":
     parser.add_argument("--force", action="store_true", help="Replace all files and update dvc trackers")
     parser.add_argument("--keep", action="store_true", help="Keep the downloaded raw files")
     parser.add_argument(
-        "--update-dvc", action="store_true", help="Skips download and only updates the DVC files",
+        "--update-dvc",
+        action="store_true",
+        help="Skips download and only updates the DVC files",
     )
     parser.add_argument(
         "--skip-dvc",
@@ -312,7 +382,11 @@ if __name__ == "__main__":
         help="Skips DVC trackers for the new downloaded files. Warning this can cause issues.",
     )
     parser.add_argument(
-        "-b", "--base-dir", type=str, default=None, help="The absolute base directory for data",
+        "-b",
+        "--base-dir",
+        type=str,
+        default=None,
+        help="The absolute base directory for data",
     )
     parser.add_argument(
         "-r",
