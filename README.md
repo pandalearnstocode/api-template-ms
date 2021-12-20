@@ -64,7 +64,7 @@
   - [__Exploring `poetry` for dependency management in python__](#exploring-poetry-for-dependency-management-in-python)
     - [__Some useful `poetry` commands__](#some-useful-poetry-commands)
     - [__Some important information__](#some-important-information)
-      - [__Important files__](#important-files)
+    - [__Important files__](#important-files)
     - [__Publishing library as artifact to artifact store__](#publishing-library-as-artifact-to-artifact-store)
   - [Developers working on the project:](#developers-working-on-the-project)
   - [Reference:](#reference)
@@ -547,7 +547,7 @@ poetry use python3.8 # Use specific version of python in the project
 ```
 ### __Some important information__
 
-#### __Important files__
+### __Important files__
 
 * `pyproject.toml` is the single file for all project related metadata.
 * `poetry.lock` file is the granular metadata.
