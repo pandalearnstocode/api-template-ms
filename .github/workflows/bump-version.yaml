@@ -28,6 +28,9 @@ jobs:
           git config --global user.email 'pandalearnstocode@users.noreply.github.com'          
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
           echo ready to commit
+          git add CHANGELOG.md
+          git add pyproject.toml
+          git add app/__init__.py
           git commit -am "ci: sync change log and version file with develop"
           echo ready to push
           git push origin develop
