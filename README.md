@@ -3,6 +3,7 @@
 <!-- Add status badge here after we get it from sonarcloud or ci/cd pipeline. -->
 
 - [RESTful API template](#restful-api-template)
+  - [Deployment URL:](#deployment-url)
   - [Tech stack:](#tech-stack)
   - [Important resource:](#important-resource)
   - [TODO checklist:](#todo-checklist)
@@ -47,6 +48,7 @@
     - [Data Backup diagram will be here](#data-backup-diagram-will-be-here)
   - [Connecting with the dev VM in azure:](#connecting-with-the-dev-vm-in-azure)
   - [CI/CD pipeline:](#cicd-pipeline)
+    - [Running GitHub actions as service](#running-github-actions-as-service)
     - [CI pipeline:](#ci-pipeline)
     - [CD pipeline:](#cd-pipeline)
   - [SCM workflow:](#scm-workflow)
@@ -104,12 +106,14 @@
 
 ## TODO checklist:
 
-- [x] create staging with docker compose
-- [x] create production with docker compose and other cloud resources
-- [] integrate ci/cd pipelines
 - [] update unfinished sections of the readme file
 - [] migrate content of the readme file to the project wiki
 - [] configure meaningful rules from flake8, pylint, black, bandit and pydocstring for API development
+- [] setup minikube, [tilt](https://tilt.dev/) & [skaffold](https://skaffold.dev/).
+- [] configure poetry. refer [this](https://github.com/nsidnev/fastapi-realworld-example-app/)
+- [] check how to get rid of multiple docker, docker compose, env and requirements files.
+- [] checkout [this](https://github.com/Kludex/fastapi-microservices) `bump lib to arq==0.22` : working
+- [] checkout [this](https://github.com/karthikasasanka/fastapi-celery-redis-rabbitmq) : not verified
 
 <!-- TODO: Update the following tree structure with updated folder structure. -->
 
