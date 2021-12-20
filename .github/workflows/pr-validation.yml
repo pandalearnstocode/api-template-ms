@@ -1,12 +1,10 @@
 name: Develop PR Validation
 env:
-  CLUSTER_NAME: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  CLUSTER_RESOURCE_GROUP: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  APP_NAME: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  NAMESPACE: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   IMAGE_NAME: api-template-ms
 on:
   pull_request:
+    branches:
+      - develop
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 jobs:
@@ -41,7 +39,7 @@ jobs:
           key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ env.pythonLocation }}-pip-
-      - name: Install depdendencies & download data
+      - name: Install dependencies & download data
         if: steps.cache.outputs.cache-hit != 'false'
         run: |
           pip install --upgrade pip
