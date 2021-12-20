@@ -16,11 +16,17 @@ jobs:
           fetch-depth: 0
           token: "${{ secrets.GITHUB_TOKEN }}"
       - id: cz
-        name: Create bump and changelog
+        name: Create bump and changelog (staging)
         uses: commitizen-tools/commitizen-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: staging
+          changelog_increment_filename: release_notes.md
+      - name: Create bump and changelog (develop)
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: develop
           changelog_increment_filename: release_notes.md
       - name: Release
         uses: softprops/action-gh-release@v1
