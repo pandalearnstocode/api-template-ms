@@ -356,9 +356,6 @@ alembic revision --autogenerate -m "init"
 alembic upgrade head
 ```
 
-
-
-
 ### Update data models in `models.py`
 
 ```python
