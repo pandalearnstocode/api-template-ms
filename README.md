@@ -1,5 +1,7 @@
 # RESTful API template
 
+* Develop workflow validation
+
 <!-- Add status badge here after we get it from sonarcloud or ci/cd pipeline. -->
 
 - [RESTful API template](#restful-api-template)
