@@ -56,7 +56,7 @@ jobs:
           bandit --exit-zero --format json --output bandit-report.json --recursive .
       - name: (step 9) Checking any secret is present in code base using gitleaks
         uses: zricethezav/gitleaks-action@master
-      - name: Run Snyk to check for vulnerabilities - Monitor
+      - name: (step 10) Run Snyk to check for vulnerabilities - Monitor
         uses: snyk/actions/python-3.8@master
         continue-on-error: true
         env:
@@ -64,7 +64,7 @@ jobs:
         with:
            command: monitor
            args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --skip-unresolved=true
-      - name: Run Snyk to check for vulnerabilities - Test
+      - name: (step 11) Run Snyk to check for vulnerabilities - Test
         uses: snyk/actions/python-3.8@master
         continue-on-error: true
         env:
@@ -72,32 +72,32 @@ jobs:
         with:
            command: test
            args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --json-file-output=snyk.json --skip-unresolved=true
-      - name: (step 9) Upload test coverage report generated for unit tests using pytest to GitHub packages.
+      - name: (step 12) Upload test coverage report generated for unit tests using pytest to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: coverage
           path: coverage.xml
-      - name: (step 10) Upload linting errors to to GitHub packages.
+      - name: (step 13) Upload linting errors to to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: linting-reports
           path: pylint.log
-      - name: (step 11) Upload flake8 errors to to GitHub packages.
+      - name: (step 14) Upload flake8 errors to to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: flake8-reports
           path: flake8.txt
-      - name: (step 12) Upload bandit errors to to GitHub packages.
+      - name: (step 15) Upload bandit errors to to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: bandit-reports
           path: bandit-report.json
-      - name: (step 12) Upload snyk errors to to GitHub packages.
+      - name: (step 16) Upload snyk errors to to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: snyk-reports
           path: snyk.json
-      - name: (step 13) Upload app code as artifact in GitHub packages.
+      - name: (step 17) Upload app code as artifact in GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: python-app
@@ -109,7 +109,7 @@ jobs:
             !venv/
             !.mypy_cache
             !.pytest_cache
-      - name: Generating the snyk report
+      - name: (step 18) Generating the snyk report
         run: |
             mkdir ~/.npm-global
             npm config set prefix '~/.npm-global'
@@ -118,7 +118,7 @@ jobs:
             source ~/.profile
             npm install snyk-to-html -g
             snyk-to-html -i snyk.json -o Snyk.html
-      - name: 'Upload Snyk report'
+      - name: (step 19) Upload Snyk report
         uses: actions/upload-artifact@v2
         with:
           name: snyk-report-html
@@ -130,40 +130,41 @@ jobs:
     if: always()
     needs: [qaqc-checks]
     steps:
-      - uses: actions/checkout@v2
+      - name: (step 1) checkout code from remote origin
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Get coverage report (pytest)
+      - name: (step 2) Get coverage report (pytest)
         uses: actions/download-artifact@v1
         with:
           name: coverage
         continue-on-error: true
-      - name: Get coverage report (pylint)
+      - name: (step 3) Get coverage report (pylint)
         uses: actions/download-artifact@v1
         with:
           name: linting-reports
         continue-on-error: true
-      - name: Get coverage report (flake8)
+      - name: (step 4) Get coverage report (flake8)
         uses: actions/download-artifact@v1
         with:
           name: flake8-reports
         continue-on-error: true
-      - name: Get coverage report (bandit)
+      - name: (step 5) Get coverage report (bandit)
         uses: actions/download-artifact@v1
         with:
           name: bandit-reports
         continue-on-error: true   
-      - name: Get coverage report (snyk)
+      - name: (step 6) Get coverage report (snyk)
         uses: actions/download-artifact@v1
         with:
           name: snyk-reports
         continue-on-error: true
-      - name: Get coverage report (snyk html)
+      - name: (step 8) Get coverage report (snyk html)
         uses: actions/download-artifact@v1
         with:
           name: snyk-reports-html
         continue-on-error: true
-      - name: SonarCloud Scan
+      - name: (step 9) SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -186,13 +187,13 @@ jobs:
     if: always()
     needs: [qaqc-publish]
     steps:
-      - name: 'Checkout GitHub Action'
+      - name: (step 1) Check out latest code from remote origin
         uses: actions/checkout@v2
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Get docker image version
+      - name: (step 2) Get docker version from VERSION file
         id: getversion
         run:  |
           MAJOR=$(cat VERSION | cut -d . -f 1)
@@ -200,7 +201,7 @@ jobs:
           PATCH=$(cat VERSION | cut -d . -f 3)
           VERSION="v${MAJOR}.${MINOR}.${PATCH}"
           echo "::set-output name=version::${VERSION}"
-      - name: 'Build image'
+      - name: (step 3) Build docker images to be push to docker registry
         uses: azure/docker-login@v1
         with:
           login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
@@ -209,7 +210,7 @@ jobs:
       - run: |
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
-      - name: Run Snyk to check Docker images for vulnerabilities
+      - name: (step 4) Run Snyk to check Docker images for vulnerabilities
         continue-on-error: true
         uses: snyk/actions/docker@master
         env:
@@ -218,20 +219,7 @@ jobs:
           image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
           args: --file=Dockerfile
           command: monitor
-  docker-push:
-    runs-on: ubuntu-latest
-    if: always()
-    needs: [docker-build]
-    steps:
-      - name: Get docker image version
-        id: getversion
-        run:  |
-          MAJOR=$(cat VERSION | cut -d . -f 1)
-          MINOR=$(cat VERSION | cut -d . -f 2)
-          PATCH=$(cat VERSION | cut -d . -f 3)
-          VERSION="v${MAJOR}.${MINOR}.${PATCH}"
-          echo "::set-output name=version::${VERSION}"
-      - name: 'Push image'
+      - name: (step 5) push docker image container registry
         uses: azure/docker-login@v1
         with:
           login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
