@@ -490,6 +490,11 @@ cz bump
 cz changelog
 ```
 
+```bash
+git push origin :refs/tags/0.0.0 # delete tags from remote
+git tag -d 0.0.0 # delete tags from local
+```
+
 ### Automated testing workflow:
 
 If the tests results are fine, run all the linting, formatting (black, autoflake8, isort) and other changes in the staging area. &#8594; Bump version, generate changelogs and release notes. &#8594; Update tags and releases in GitHub &#8594;Check if the dependency needs to be updated or not, if required to that &#8594; Commit code to staging branch &#8594; Trigger a build pipeline to deploy this in staging server &#8594; Run all the regression tests, integration tests, load tests here &#8594; Generate results and publish the same in project Wiki or some other place &#8594; Communicate build stats and tests result to via email & teams notification.
