@@ -57,6 +57,7 @@ jobs:
           bandit --exit-zero --format json --output bandit-report.json --recursive .
       - name: (step 9) Checking any secret is present in code base using gitleaks
         uses: zricethezav/gitleaks-action@master
+        continue-on-error: true
       - name: (step 10) Run Snyk to check for vulnerabilities - Monitor
         uses: snyk/actions/python-3.8@master
         continue-on-error: true
