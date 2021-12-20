@@ -24,14 +24,6 @@ jobs:
         with:
           python-version: '3.8'
           architecture: 'x64'
-      - name: (step 3) Get docker & library image version.
-        id: getversion
-        run:  |
-          MAJOR=$(cat VERSION | cut -d . -f 1)
-          MINOR=$(cat VERSION | cut -d . -f 2)
-          PATCH=$(cat VERSION | cut -d . -f 3)
-          VERSION="v${MAJOR}.${MINOR}.${PATCH}"
-          echo "::set-output name=version::${VERSION}"
       - name: (step 4) Create cache depending on requirements file.
         uses: actions/cache@v2
         id: cache
@@ -82,7 +74,7 @@ jobs:
         with:
           name: bandit-reports
           path: bandit-report.json
-      - name: Upload artifact for deployment jobs (app)
+      - name: (step 13) Upload app code as artifact in GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: python-app
