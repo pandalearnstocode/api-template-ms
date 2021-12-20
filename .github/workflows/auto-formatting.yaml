@@ -13,7 +13,7 @@ jobs:
       - run: pip install black autopep8 autoflake
       - run: black --check .
       - name: If needed, commit black changes to the pull request
-        if: failure() && github.event.pull_request.merged == true
+        if: failure()
         run: |
           printenv | grep GITHUB
           git config --global user.name 'pandalearnstocode'
