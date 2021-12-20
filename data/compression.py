@@ -77,10 +77,7 @@ def decompress_files():
 
 
 def decompress_file(
-    file: pathlib.Path,
-    extract_to: pathlib.Path = None,
-    new_file_name: str = None,
-    delete_compressed: bool = True,
+    file: pathlib.Path, extract_to: pathlib.Path = None, new_file_name: str = None, delete_compressed: bool = True,
 ) -> pathlib.Path:
     """Decompresses the given file.
 

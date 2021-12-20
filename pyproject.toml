@@ -4,6 +4,8 @@ known_third_party = ["fastapi"]
 line_length = 120
 atomic = true
 extend_skip_glob = "migrations,scripts"
+src_paths = ["app", "tests"]
+combine_as_imports = true
 
 [tool.mypy]
 follow_imports = "skip"
@@ -22,8 +24,8 @@ ignore_errors = true
 
 
 [tool.pytest.ini_options]
-addopts = [
-  "--strict-config",
+addopts = '''
+  --strict-config,
   --strict-markers
   --tb=short
   --cov=app
@@ -35,22 +37,17 @@ addopts = [
   --no-cov-on-fail
   --cov-fail-under=60
   --numprocesses=auto
-]
+'''
 xfail_strict = true
 junit_family = "xunit2"
 filterwarnings = "error"
 testpaths = "app/tests"
-filterwarnings = "error"
 env = [
     "SECRET_KEY=secret",
     "MAX_CONNECTIONS_COUNT=1",
     "MIN_CONNECTIONS_COUNT=1"
 ]
 
-[tool.isort]
-profile = "black"
-src_paths = ["app", "tests"]
-combine_as_imports = true
 
 [tool.commitizen]
 name = "cz_conventional_commits"

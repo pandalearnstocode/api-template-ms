@@ -11,10 +11,10 @@ client = TestClient(app)
 # PORT="5000"
 # SERVER="http://127.0.0.1"
 # Dev Config
-PORT="80"
-SERVER="http://20.127.124.145"
+PORT = "80"
+SERVER = "http://20.127.124.145"
 
-URL=f"{SERVER}:{PORT}"
+URL = f"{SERVER}:{PORT}"
 
 
 @pytest.fixture()
@@ -23,10 +23,7 @@ def api_token():
     res = client.post(
         f"{URL}/token",
         headers={"Accept": "application/x-www-form-urlencoded"},
-        data={
-            "username": config.API_USERNAME,
-            "password": config.API_PASSWORD,
-        },
+        data={"username": config.API_USERNAME, "password": config.API_PASSWORD,},
     )
     res_json = res.json()
 
@@ -42,23 +39,11 @@ def test_api_a(api_token):
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
     # Authorized but should raise 400 error.
-    response = client.get(
-        f"{URL}/api_a/a",
-        headers={
-            "Accept": "application/json",
-            "Authorization": api_token,
-        },
-    )
+    response = client.get(f"{URL}/api_a/a", headers={"Accept": "application/json", "Authorization": api_token,},)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     # Successful request.
-    response = client.get(
-        f"{URL}/api_a/200",
-        headers={
-            "Accept": "application/json",
-            "Authorization": api_token,
-        },
-    )
+    response = client.get(f"{URL}/api_a/200", headers={"Accept": "application/json", "Authorization": api_token,},)
     assert response.status_code == HTTPStatus.OK
 
     for val in response.json().values():
@@ -71,23 +56,11 @@ def test_api_b(api_token):
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
     # Authorized but should raise 400 error.
-    response = client.get(
-        f"{URL}/api_b/b",
-        headers={
-            "Accept": "application/json",
-            "Authorization": api_token,
-        },
-    )
+    response = client.get(f"{URL}/api_b/b", headers={"Accept": "application/json", "Authorization": api_token,},)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     # Successful request.
-    response = client.get(
-        f"{URL}/api_b/0",
-        headers={
-            "Accept": "application/json",
-            "Authorization": api_token,
-        },
-    )
+    response = client.get(f"{URL}/api_b/0", headers={"Accept": "application/json", "Authorization": api_token,},)
     assert response.status_code == HTTPStatus.OK
 
     for val in response.json().values():
