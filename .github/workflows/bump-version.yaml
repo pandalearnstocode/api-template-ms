@@ -26,7 +26,7 @@ jobs:
         uses: commitizen-tools/commitizen-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: staging
+          branch: develop
           changelog_increment_filename: release_notes.md
       - name: Release
         uses: softprops/action-gh-release@v1
