@@ -1,8 +1,11 @@
 # RESTful API template
 
+* Develop deployment workflow validation
+
 <!-- Add status badge here after we get it from sonarcloud or ci/cd pipeline. -->
 
 - [RESTful API template](#restful-api-template)
+  - [Deployment URL:](#deployment-url)
   - [Tech stack:](#tech-stack)
   - [Important resource:](#important-resource)
   - [TODO checklist:](#todo-checklist)
@@ -47,6 +50,7 @@
     - [Data Backup diagram will be here](#data-backup-diagram-will-be-here)
   - [Connecting with the dev VM in azure:](#connecting-with-the-dev-vm-in-azure)
   - [CI/CD pipeline:](#cicd-pipeline)
+    - [Running GitHub actions as service](#running-github-actions-as-service)
     - [CI pipeline:](#ci-pipeline)
     - [CD pipeline:](#cd-pipeline)
   - [SCM workflow:](#scm-workflow)
@@ -59,6 +63,11 @@
     - [Container names in different envs:](#container-names-in-different-envs)
   - [DL linked with the project:](#dl-linked-with-the-project)
   - [Dependency files:](#dependency-files)
+  - [Exploring `poetry` for dependency management in python](#exploring-poetry-for-dependency-management-in-python)
+    - [Some useful `poetry` commands](#some-useful-poetry-commands)
+    - [Some important information](#some-important-information)
+    - [Important files](#important-files)
+    - [Publishing library as artifact to artifact store](#publishing-library-as-artifact-to-artifact-store)
   - [Developers working on the project:](#developers-working-on-the-project)
   - [Reference:](#reference)
 
@@ -104,12 +113,14 @@
 
 ## TODO checklist:
 
-- [x] create staging with docker compose
-- [x] create production with docker compose and other cloud resources
-- [] integrate ci/cd pipelines
 - [] update unfinished sections of the readme file
 - [] migrate content of the readme file to the project wiki
 - [] configure meaningful rules from flake8, pylint, black, bandit and pydocstring for API development
+- [] setup minikube, [tilt](https://tilt.dev/) & [skaffold](https://skaffold.dev/).
+- [] configure poetry. refer [this](https://github.com/nsidnev/fastapi-realworld-example-app/)
+- [] check how to get rid of multiple docker, docker compose, env and requirements files.
+- [] checkout [this](https://github.com/Kludex/fastapi-microservices) `bump lib to arq==0.22` : working
+- [] checkout [this](https://github.com/karthikasasanka/fastapi-celery-redis-rabbitmq) : not verified
 
 <!-- TODO: Update the following tree structure with updated folder structure. -->
 
@@ -347,9 +358,6 @@ alembic revision --autogenerate -m "init"
 alembic upgrade head
 ```
 
-
-
-
 ### Update data models in `models.py`
 
 ```python
@@ -470,6 +478,15 @@ Lets imaging that there is an issue in github repository which is assigned to yo
 
 Once a new code is merge to develop &#8594; Create, scan, build & push docker image to container registry &#8594; Deploy the same image in the staging envs &#8594; Generate project wiki docs &#8594;Deploy project wiki docs &#8594; Run unit tests on the dev envs using GitHub actions &#8594; Communicate the tests results using a teams & mail notification.
 
+```bash
+git tag -a 0.0.1 -m "Init version"
+git push --tags 
+git add .
+git commit -m "fix: svc installed."
+cz bump
+cz changelog
+```
+
 ### Automated testing workflow:
 
 If the tests results are fine, run all the linting, formatting (black, autoflake8, isort) and other changes in the staging area. &#8594; Bump version, generate changelogs and release notes. &#8594; Update tags and releases in GitHub &#8594;Check if the dependency needs to be updated or not, if required to that &#8594; Commit code to staging branch &#8594; Trigger a build pipeline to deploy this in staging server &#8594; Run all the regression tests, integration tests, load tests here &#8594; Generate results and publish the same in project Wiki or some other place &#8594; Communicate build stats and tests result to via email & teams notification.
@@ -508,6 +525,63 @@ Check gitflow related details [here](https://nvie.com/posts/a-successful-git-bra
 * docs
 
 __Note:__ Right now, only `requirements.txt` is used for all the envs but this should be changed depending on envs. 
+
+
+## Exploring `poetry` for dependency management in python
+
+In general `pip` & `venv` is a good combination of tool when you don't have to manage multiple dependencies for your project. But imaging that in a project you need to management multiple dependency files to deploy code into multiple envs. It is possible to do this with `pip`, but in that case you need to manage multiple requirements files. To solve this project I have checked a few alternative like  `pyenv`, `pipx`, `pipenv`, `poetry` etc. According to my experience, poetry is the simplest and most efficient one. I was checking some of the useful tutorials about this and here I am just taking a note of some of the useful points regarding this tool.
+
+### Some useful `poetry` commands
+
+```bash
+# Download poetry in Ubuntu
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+source $HOME/.poetry/env # Add to PATH
+poetry --version # Check version of poetry
+poetry self update # Update version
+poetry new project1 # Create a new project
+cd project1
+tree . 
+poetry run pytest # Run pytest for the project
+poetry add pandas # Add a package as dependency of a project
+poetry remove pandas # Delete a project from the file
+poetry add --dev pytest # Add a package as dev dependency in a poetry project
+poetry add -D coverage[toml] pytest-cov # --dev & -D same
+poetry install # Install all the dependencies for a project
+poetry build # Build a python library using poetry
+poetry publish # Publish library to PyPI
+poetry export - requirements.txt --output requirements.txt # Generate requirements.txt
+poetry use python3.8 # Use specific version of python in the project
+```
+
+### Some important information
+
+### Important files
+
+* `pyproject.toml` is the single file for all project related metadata.
+* `poetry.lock` file is the granular metadata.
+* `.pypirc` will not work with poetry. 
+* `config.toml` & `auth.toml` is used for setting up the artifact repository.
+* export `POETRY_PYPI_TOKEN_PYPI`, export `POETRY_HTTP_BAISC_PYPI_USERNAME` and export `POETRY_HTTP_BAISC_PYPI_PASSWORD` can be used for this.
+
+### Publishing library as artifact to artifact store
+
+```toml
+# config.toml : ~/.config/pypoetry/config.toml
+[repositories]
+pypi = {url = "https://upload.pypi.org/legacy/"}
+testpypi = {url = "https://test.pypi.org/legacy/"}
+```
+
+```toml
+# auth.toml: ~/.config/pypoetry/auth.toml
+[http-basic]
+pypi = {username = "myuser", password = "topsecret"}
+testpypi = {username = "myuser", password = "topsecret"}
+```
+
+Check GitHub issue related to this [here](https://github.com/python-poetry/poetry/issues/111).
+
 
 ## Developers working on the project:
 

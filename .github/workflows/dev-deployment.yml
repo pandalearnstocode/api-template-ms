@@ -1,12 +1,12 @@
-name: "Development deploy"
+name: Development deploy
 on:
-  pull_request:
-    types: [ closed ]
+  push:
+    branches:
+      - develop
   workflow_dispatch:
 jobs:
   deployment:
     name: Deploy backend app in AZ VM (develop)
-    if: github.event.pull_request.merged == true
     runs-on: self-hosted
     environment: 
       name: dev

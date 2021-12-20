@@ -1,39 +1,31 @@
-name: Develop PR Validation
+name: PR Validation
 env:
-  CLUSTER_NAME: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  CLUSTER_RESOURCE_GROUP: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  APP_NAME: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  NAMESPACE: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   IMAGE_NAME: api-template-ms
+  PYTHON_VERSION: '3.8'
 on:
   pull_request:
+    branches:
+      - develop
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 jobs:
-  build:
+  qaqc-checks:
+    name: Run QA-QC checks
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Install system libraries
+      - name: (step 1) Install system level libraries.
         run: |
           sudo apt-get update
           sudo apt-get -y install libpq-dev gcc
-      - name: Checkout code
+      - name: (step 2) Checkout code from remote origin.
         uses: actions/checkout@v2
-      - name: Setup python version
+      - name: (step 3) Setup python version
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
           architecture: 'x64'
-      - name: Get docker image version
-        id: getversion
-        run:  |
-          MAJOR=$(cat VERSION | cut -d . -f 1)
-          MINOR=$(cat VERSION | cut -d . -f 2)
-          PATCH=$(cat VERSION | cut -d . -f 3)
-          VERSION="v${MAJOR}.${MINOR}.${PATCH}"
-          echo "::set-output name=version::${VERSION}"
-      - name: Create cache
+      - name: (step 4) Create cache depending on requirements file.
         uses: actions/cache@v2
         id: cache
         with:
@@ -41,52 +33,78 @@ jobs:
           key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ env.pythonLocation }}-pip-
-      - name: Install depdendencies & download data
-        if: steps.cache.outputs.cache-hit != 'false'
+      - name: (step 5) Install dependencies & download data.
+        if: steps.cache.outputs.cache-hit != 'false' # Need to change later
         run: |
           pip install --upgrade pip
           pip install setuptools wheel twine
           pip install -r requirements.txt
           pip install PyJWT
           git fetch --depth 1 origin develop
-      - name: Lint (pylint)
-        run: |
-          pip install pylint
-          pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > pylint.log
-      - name: pytest (unit tests)
+      - name: (step 6) Run pytest & generate test coverage report (unit tests).
         run: |
           coverage run -m pytest
           coverage xml
-      - name: Lint (flake8)
+      - name: (step 7) Check linting using pylint & generate report.
+        run: |
+          pip install pylint
+          pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > pylint.log
+      - name: (step 8) Check linting using flake8 and generate report
         run: |
           flake8 --exit-zero --output-file=flake8.txt .
-      - name: Lint (bandit)
+      - name: (step 8) Run bandit and generate report for security related issue
         run: |
           bandit --exit-zero --format json --output bandit-report.json --recursive .
-      - name: Store coverage for sonar job (pytest)
+      - name: (step 9) Checking any secret is present in code base using gitleaks
+        uses: zricethezav/gitleaks-action@master
+        continue-on-error: true
+      - name: (step 10) Run Snyk to check for vulnerabilities - Monitor
+        uses: snyk/actions/python-3.8@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+           command: monitor
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --skip-unresolved=true
+      - name: (step 11) Run Snyk to check for vulnerabilities - Test
+        uses: snyk/actions/python-3.8@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+           command: test
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --json-file-output=snyk.json --skip-unresolved=true
+      - name: (step 12) Upload test coverage report generated for unit tests using pytest to GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: coverage
           path: coverage.xml
-      - name: Store reports for sonar job (pylint)
+          retention-days: 5
+      - name: (step 13) Upload linting errors to to GitHub packages.
         uses: actions/upload-artifact@v2
-        if: always()
         with:
           name: linting-reports
           path: pylint.log
-      - name: Store reports for sonar job (flake8)
+          retention-days: 5
+      - name: (step 14) Upload flake8 errors to to GitHub packages.
         uses: actions/upload-artifact@v2
-        if: always()
         with:
           name: flake8-reports
           path: flake8.txt
-      - name: Store reports for sonar job (bandit)
+          retention-days: 5
+      - name: (step 15) Upload bandit errors to to GitHub packages.
         uses: actions/upload-artifact@v2
-        if: always()
         with:
           name: bandit-reports
           path: bandit-report.json
-      - name: Upload artifact for deployment jobs (app)
+          retention-days: 5
+      - name: (step 16) Upload snyk errors to to GitHub packages.
+        uses: actions/upload-artifact@v2
+        with:
+          name: snyk-reports
+          path: snyk.json
+          retention-days: 5
+      - name: (step 17) Upload app code as artifact in GitHub packages.
         uses: actions/upload-artifact@v2
         with:
           name: python-app
@@ -98,36 +116,63 @@ jobs:
             !venv/
             !.mypy_cache
             !.pytest_cache
-  Sonarcloud:
-    name: SonarCloud
+          retention-days: 5
+      - name: (step 18) Generating the snyk report
+        run: |
+            mkdir ~/.npm-global
+            npm config set prefix '~/.npm-global'
+            export PATH=~/.npm-global/bin:$PATH
+            export PATH=~/.npm-global/bin:$PATH
+            source ~/.profile
+            npm install snyk-to-html -g
+            snyk-to-html -i snyk.json -o snyk.html
+      - name: (step 19) Upload Snyk report
+        uses: actions/upload-artifact@v2
+        with:
+          name: snyk-reports-html
+          path: snyk.html
+          retention-days: 5
+  qaqc-publish:
+    name: QA-QC Publish
     runs-on: ubuntu-latest
     if: always()
-    needs: [build]
+    needs: [qaqc-checks]
     steps:
-      - uses: actions/checkout@v2
+      - name: (step 1) checkout code from remote origin
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Get coverage report (pytest)
+      - name: (step 2) Get coverage report (pytest)
         uses: actions/download-artifact@v1
         with:
           name: coverage
         continue-on-error: true
-      - name: Get coverage report (pylint)
+      - name: (step 3) Get coverage report (pylint)
         uses: actions/download-artifact@v1
         with:
           name: linting-reports
         continue-on-error: true
-      - name: Get coverage report (flake8)
+      - name: (step 4) Get coverage report (flake8)
         uses: actions/download-artifact@v1
         with:
           name: flake8-reports
         continue-on-error: true
-      - name: Get coverage report (bandit)
+      - name: (step 5) Get coverage report (bandit)
         uses: actions/download-artifact@v1
         with:
           name: bandit-reports
         continue-on-error: true   
-      - name: SonarCloud Scan
+      - name: (step 6) Get coverage report (snyk)
+        uses: actions/download-artifact@v1
+        with:
+          name: snyk-reports
+        continue-on-error: true
+      - name: (step 8) Get coverage report (snyk html)
+        uses: actions/download-artifact@v1
+        with:
+          name: snyk-reports-html
+        continue-on-error: true
+      - name: (step 9) SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -145,53 +190,19 @@ jobs:
             -Dsonar.python.version=3.8
             -Dsonar.exclusions=**/venv/**
             -Dsonar.sourceEncoding=UTF-8
-      - name: Run Snyk to check for vulnerabilities - Monitor
-        uses: snyk/actions/python-3.8@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-           command: monitor
-           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --skip-unresolved=true
-         
-      - name: Run Snyk to check for vulnerabilities - Test
-        uses: snyk/actions/python-3.8@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-           command: test
-           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --json-file-output=snyk.json --skip-unresolved=true
-           
-      - name: Generating the snyk report
-        run: |
-            mkdir ~/.npm-global
-            npm config set prefix '~/.npm-global'
-            export PATH=~/.npm-global/bin:$PATH
-            export PATH=~/.npm-global/bin:$PATH
-            source ~/.profile
-            npm install snyk-to-html -g
-            snyk-to-html -i snyk.json -o Snyk.html
-      - name: 'Upload Snyk report'
-        uses: actions/upload-artifact@v2
-        with:
-          name: snyk-report
-          path: Snyk.html
-          retention-days: 5
-      - name: gitleaks
-        uses: zricethezav/gitleaks-action@master
-  push:
+  docker-build:
+    name: Docker Build & Publish
     runs-on: ubuntu-latest
     if: always()
-    needs: [Sonarcloud]
+    needs: [qaqc-publish]
     steps:
-      - name: 'Checkout GitHub Action'
+      - name: (step 1) Check out latest code from remote origin
         uses: actions/checkout@v2
       - name: 'Login via Azure CLI'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Get docker image version
+      - name: (step 2) Get docker version from VERSION file
         id: getversion
         run:  |
           MAJOR=$(cat VERSION | cut -d . -f 1)
@@ -199,7 +210,7 @@ jobs:
           PATCH=$(cat VERSION | cut -d . -f 3)
           VERSION="v${MAJOR}.${MINOR}.${PATCH}"
           echo "::set-output name=version::${VERSION}"
-      - name: 'Build image'
+      - name: (step 3) Build docker images to be push to docker registry
         uses: azure/docker-login@v1
         with:
           login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
@@ -208,7 +219,7 @@ jobs:
       - run: |
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
           docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
-      - name: Run Snyk to check Docker images for vulnerabilities
+      - name: (step 4) Run Snyk to check Docker images for vulnerabilities
         continue-on-error: true
         uses: snyk/actions/docker@master
         env:
@@ -217,7 +228,7 @@ jobs:
           image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
           args: --file=Dockerfile
           command: monitor
-      - name: 'Push image'
+      - name: (step 5) push docker image container registry
         uses: azure/docker-login@v1
         with:
           login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
