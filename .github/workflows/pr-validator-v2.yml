@@ -6,6 +6,7 @@ env:
   PRODUCT: mba
   COMPONENT: be
   COMPONENT_TYPE: api
+  IMAGE_NAME: mba
   DEPLOYMENT_TYPE: DOCKER_COMPOSE
   WIKI_CONTAINER_NAME: mbabackendwikidata
   DB_CONTAINER_NAME: mbabackendwikidata
