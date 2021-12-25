@@ -2,10 +2,10 @@ name: PR Validation
 env:
   PYTHON_VERSION: '3.8'
   ACR_NAME: mroi
-  TEAM: CA
-  PRODUCT: MBA
-  COMPONENT: BE
-  COMPONENT_TYPE: API
+  TEAM: ca
+  PRODUCT: mba
+  COMPONENT: be
+  COMPONENT_TYPE: api
   DEPLOYMENT_TYPE: DOCKER_COMPOSE
   WIKI_CONTAINER_NAME: mbabackendwikidata
   DB_CONTAINER_NAME: mbabackendwikidata
