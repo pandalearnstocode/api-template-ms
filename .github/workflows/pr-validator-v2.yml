@@ -255,7 +255,7 @@ jobs:
             '**/*.py'
           retention-days: 5
       - name: Build a Docker image
-        run: docker build -t api_image:${{ steps.getversion.outputs.version }} .
+        run: docker build -t  ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }} .
       - name: Run Snyk to check Docker image for vulnerabilities
         continue-on-error: true
         uses: snyk/actions/docker@master
