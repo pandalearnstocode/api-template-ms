@@ -1,0 +1,290 @@
+name: PR Validation
+env:
+  PYTHON_VERSION: '3.8'
+  ACR_NAME: mroi
+  TEAM: CA
+  PRODUCT: MBA
+  COMPONENT: BE
+  COMPONENT_TYPE: API
+  DEPLOYMENT_TYPE: DOCKER_COMPOSE
+  WIKI_CONTAINER_NAME: mbabackendwikidata
+  DB_CONTAINER_NAME: mbabackendwikidata
+  DATA_CONTAINER_NAME: mbabackendwikidata
+  DB_TYPE: ''
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+jobs:
+  auto-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code from remote origin.
+        uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+      - name: Install Python dependencies
+        run: pip install black mypy oitnb
+      - uses: wearerequired/lint-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          black: true
+          oitnb: true
+          auto_fix: true
+  qaqc-checks-pylint:
+    name: Run QA-QC checks with pylint
+    needs: [auto-lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code from remote origin.
+        uses: actions/checkout@v2
+      - name: Setup python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+      - name: Generate logs for reporting using pylint.
+        run: |
+          pip install pylint
+          pylint app -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --exit-zero > pylint.log
+      - name: Upload linting errors to to GitHub packages.
+        uses: actions/upload-artifact@v2
+        with:
+          name: linting-reports
+          path: pylint.log
+          retention-days: 5
+  qaqc-checks-flake8:
+    name: Run QA-QC checks with flake8
+    needs: [auto-lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code from remote origin.
+        uses: actions/checkout@v2
+      - name: Setup python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+      - name: Check linting using flake8 and generate report.
+        run: |
+          pip install flake8
+          flake8 --exit-zero --output-file=flake8.txt .
+      - name: Upload flake8 errors to to GitHub packages.
+        uses: actions/upload-artifact@v2
+        with:
+          name: flake8-reports
+          path: flake8.txt
+  qaqc-checks-bandit:
+    name: Run QA-QC checks with Bandit
+    needs: [auto-lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code from remote origin.
+        uses: actions/checkout@v2
+      - name: Setup python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+      - name: Check linting using bandit & generate report.
+        run: |
+          pip install bandit
+          bandit --exit-zero --format json --output bandit-report.json --recursive .
+      - name: Upload bandit errors to to GitHub packages.
+        uses: actions/upload-artifact@v2
+        with:
+          name: bandit-reports
+          path: bandit-report.json
+          retention-days: 5
+  qaqc-checks-snyk-python:
+    name: Run QA-QC checks with snyk for python code
+    needs: [auto-lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code from remote origin.
+        uses: actions/checkout@v2
+      - name: Setup python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+      - name: Run Snyk to check for vulnerabilities in python code
+        uses: snyk/actions/python-3.8@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+           command: test
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --json-file-output=snyk.json --skip-unresolved=true
+      - name: Upload snyk errors to to GitHub packages.
+        uses: actions/upload-artifact@v2
+        continue-on-error: true
+        with:
+          name: snyk-reports
+          path: snyk.json
+          retention-days: 5
+  unit-tests-pytest:
+    name: Run unit tests with pytest
+    needs: [auto-lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Install system level libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libpq-dev gcc
+      - name: Checkout code from remote origin.
+        uses: actions/checkout@v2
+      - name: Setup python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+      - name: Create cache depending on requirements file.
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ env.pythonLocation }}-pip-
+      - name: Install dependencies & download data.
+        if: steps.cache.outputs.cache-hit != 'false' # Need to change later
+        run: |
+          pip install --upgrade pip
+          pip install setuptools wheel twine
+          pip install -r requirements.txt
+          pip install PyJWT
+      - name: Run pytest & generate test coverage report (unit tests).
+        run: |
+          coverage run -m pytest
+          coverage xml
+      - name: Upload test coverage report generated for unit tests using pytest to GitHub packages.
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage
+          path: coverage.xml
+          retention-days: 5
+  wiki-publish:
+    name: Publish project wiki in GitHub pages
+    needs: [auto-lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Create env file
+        run: |
+          pip install azure-storage-blob loguru typer typer-cli python-dotenv
+          cd wiki
+          cat << EOF > .env
+          AZURE_STORAGE_CONTAINER=${{ env.WIKI_CONTAINER_NAME }}
+          AZURE_STORAGE_CONNECTION_STRING=${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          EOF
+          typer get_data_app.py run download_all
+          cd ..
+      - run: pip install mkdocs-material pymdown-extensions markdown
+      - run: mkdocs gh-deploy --force
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: wiki
+          path: '**/*.md'
+  qa-qc-report-publish:
+    name: Publish QA/QC report
+    needs: [unit-tests-pytest,qaqc-checks-snyk-python,qaqc-checks-bandit,qaqc-checks-flake8, qaqc-checks-pylint, wiki-publish, auto-lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v2
+      - name: (step 2) Get docker version from VERSION file
+        id: getversion
+        run:  |
+          pip install toml-cli
+          RV=$(toml get --toml-path pyproject.toml tool.commitizen.version)
+          VERSION="v${RV}"
+          echo "::set-output name=version::${VERSION}"
+          echo "$VERSION"
+      - name: Download all the reports generated in previous steps
+        uses: actions/download-artifact@v2
+      - name: Run Snyk to check for vulnerabilities - Monitor
+        uses: snyk/actions/python-3.8@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+           command: monitor
+           args: --debug --org=${{ secrets.SNYK_ORGID }} --project-name=${{github.repository}} --file=/github/workspace/requirements.txt --skip-unresolved=true
+      - name: Checking any secret is present in code base using gitleaks
+        uses: zricethezav/gitleaks-action@master
+        continue-on-error: true
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=pandalearnstocode
+            -Dsonar.projectKey=api-template-ms
+            -Dsonar.sources=app
+            -Dsonar.dynamicAnalysis=reuseReports
+            -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
+            -Dsonar.python.pylint.reportPaths=linting-reports/pylint.log
+            -Dsonar.python.bandit.reportPaths=bandit-reports/bandit-report.json
+            -Dsonar.python.flake8.reportPaths=flake8-reports/flake8.txt
+            -Dsonar.python.version=3.8
+            -Dsonar.exclusions=**/venv/**
+            -Dsonar.sourceEncoding=UTF-8
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-app
+          path: 
+            '**/*.py'
+          retention-days: 5
+      - name: Build a Docker image
+        run: docker build -t api_image:${{ steps.getversion.outputs.version }} .
+      - name: Run Snyk to check Docker image for vulnerabilities
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
+          args: --file=Dockerfile
+          command: monitor
+      - name: Run Snyk to check Docker image for vulnerabilities
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
+          args: --file=Dockerfile
+          command: test
+      - name: Upload result to GitHub Code Scanning
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: snyk.sarif
+      - name: push docker image container registry
+        continue-on-error: true
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - run: |
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
