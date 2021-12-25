@@ -1,7 +1,7 @@
 # RESTful API template
 
 
-pr v2 validation:4
+pr v2 validation:5
 
 
 <!-- Add status badge here after we get it from sonarcloud or ci/cd pipeline. -->
