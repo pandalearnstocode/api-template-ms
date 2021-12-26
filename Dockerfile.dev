@@ -1,4 +1,4 @@
-FROM python:3.11.0a1-slim-bullseye
+FROM python:3.11.0a3-slim-bullseye
 ENV PYTHONWRITEBYTECODE 1
 ENV PYTHONBUFFERED 1
 ENV PATH /usr/local/bin:$PATH
