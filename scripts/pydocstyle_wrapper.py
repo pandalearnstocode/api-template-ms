@@ -20,7 +20,11 @@ errors = []
 try:
     for (filename, checked_codes, ignore_decorators) in conf.get_files_to_check():
         errors.extend(
-            check((filename,), select=checked_codes, ignore_decorators=ignore_decorators,)
+            check(
+                (filename,),
+                select=checked_codes,
+                ignore_decorators=ignore_decorators,
+            )
         )
 except IllegalConfiguration as error:
     sys.stderr.write(error.args[0])
@@ -30,19 +34,22 @@ except IllegalConfiguration as error:
 sonar_issues = []
 
 for error in errors:
-    if hasattr(error, 'code'):
+    if hasattr(error, "code"):
         sonar_issues.append(
             {
-                'engineId': 'pydocstyle',
-                'ruleId': error.code,
-                'severity': 'MINOR',
-                'type': 'CODE_SMELL',
-                'primaryLocation': {
-                    'message': error.message,
-                    'filePath': error.filename,
-                    'textRange': {'startLine': error.line, 'startColumn': 1,},
+                "engineId": "pydocstyle",
+                "ruleId": error.code,
+                "severity": "MINOR",
+                "type": "CODE_SMELL",
+                "primaryLocation": {
+                    "message": error.message,
+                    "filePath": error.filename,
+                    "textRange": {
+                        "startLine": error.line,
+                        "startColumn": 1,
+                    },
                 },
-                'effortMinutes': 5,
+                "effortMinutes": 5,
             }
         )
 
@@ -50,5 +57,5 @@ EXIT_CODE = 0
 if len(errors) > 0:
     EXIT_CODE = 1
 
-json.dump({'issues': sonar_issues}, sys.stdout)
+json.dump({"issues": sonar_issues}, sys.stdout)
 sys.exit(EXIT_CODE)
