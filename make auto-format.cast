@@ -1,0 +1,10 @@
+{"version": 2, "width": 233, "height": 12, "timestamp": 1640161693, "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"}}
+[0.366981, "o", "(base) \u001b]0;abinbev@abinbev: ~/work/commercial_analytics/MBA/mt-mba-be-api\u0007\u001b[01;32mabinbev@abinbev\u001b[00m:\u001b[01;34m~/work/commercial_analytics/MBA/mt-mba-be-api\u001b[00m$ "]
+[2.139768, "o", "make auto-format"]
+[2.488849, "o", "\r\n"]
+[2.494132, "o", "black .\r\n"]
+[2.637316, "o", "\u001b[1mAll done! ✨ 🍰 ✨\u001b[0m\r\n51 files left unchanged.\u001b[0m\r\n"]
+[2.653085, "o", "autopep8 --recursive --in-place --aggressive --aggressive .\r\n"]
+[8.055451, "o", "autoflake --in-place -r --ignore-init-module-imports --remove-unused-variables --remove-all-unused-imports .\r\n"]
+[9.470361, "o", "(base) \u001b]0;abinbev@abinbev: ~/work/commercial_analytics/MBA/mt-mba-be-api\u0007\u001b[01;32mabinbev@abinbev\u001b[00m:\u001b[01;34m~/work/commercial_analytics/MBA/mt-mba-be-api\u001b[00m$ "]
+[12.904824, "o", "exit\r\n"]

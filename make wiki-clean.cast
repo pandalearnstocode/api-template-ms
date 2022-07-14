@@ -1,0 +1,7 @@
+{"version": 2, "width": 233, "height": 12, "timestamp": 1640162394, "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"}}
+[0.427574, "o", "(base) \u001b]0;abinbev@abinbev: ~/work/commercial_analytics/MBA/mt-mba-be-api\u0007\u001b[01;32mabinbev@abinbev\u001b[00m:\u001b[01;34m~/work/commercial_analytics/MBA/mt-mba-be-api\u001b[00m$ "]
+[2.007382, "o", "make wiki-clean"]
+[2.798809, "o", "\r\n"]
+[2.803797, "o", "rm -rf site/\r\n"]
+[2.80859, "o", "(base) \u001b]0;abinbev@abinbev: ~/work/commercial_analytics/MBA/mt-mba-be-api\u0007\u001b[01;32mabinbev@abinbev\u001b[00m:\u001b[01;34m~/work/commercial_analytics/MBA/mt-mba-be-api\u001b[00m$ "]
+[5.590409, "o", "exit\r\n"]
