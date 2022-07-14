@@ -12,27 +12,27 @@ app = FastAPI()
 # Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(auth.router)
 app.include_router(views.router)
 
 
-@app.on_event('startup')
+@app.on_event("startup")
 def on_startup():
     create_db_and_tables()
 
 
-@app.get('/ping')
+@app.get("/ping")
 def pong():
-    return {'ping': 'pong!'}
+    return {"ping": "pong!"}
 
 
-@app.post('/task/', response_model=Task)
+@app.post("/task/", response_model=Task)
 def create_task(task: TaskCreate, session: Session = Depends(get_session)):
     db_task = Task.from_orm(task)
     session.add(db_task)
